@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>昵称生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f5f5f5;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 24px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            min-height: 100px;
+            resize: vertical;
+            font-size: 16px;
+        }
+        .switch-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin-left: 12px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #6200ee;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .btn-container {
+            display: flex;
+            gap: 16px;
+        }
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        #btnAbout {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        #btnGenerate {
+            background-color: #6200ee;
+            color: white;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="input-group">
+            <label for="inputNickname">请输入昵称</label>
+            <textarea id="inputNickname" placeholder="输入昵称内容"></textarea>
+        </div>
+        
+        <div class="input-group">
+            <label for="inputSuffix">请输入后缀</label>
+            <textarea id="inputSuffix" placeholder="输入后缀内容（英文字符会倒置）"></textarea>
+        </div>
+        
+        <div class="switch-container">
+            <span>昵称垂直:</span>
+            <label class="switch">
+                <input type="checkbox" id="switchVertical">
+                <span class="slider"></span>
+            </label>
+        </div>
+        
+        <div class="btn-container">
+            <button id="btnAbout">关于</button>
+            <button id="btnGenerate">生成</button>
+        </div>
+    </div>
+
+    <div id="modalAbout" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">关于</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>QQ昵称生成器</p>
+                <p>勾选昵称垂直,可以做到@你时(等)你的昵称一字一行的效果,但仅设置为群昵称有效,设置为QQ昵称会失效。</p>
+                <p>后缀的效果是:@你时(等情况),后缀跨过消息内容出现在行末,后缀可设置为QQ昵称生效,设置为群昵称会设置失败,后缀里英文字符会倒置,故假如你想生成后缀"喵~",你应当在输入框键入"~喵"而不是"喵~"。</p>
+                <p>原理:本APP为小白提供,如果你有一定技术水平,了解原理自行生成客制化昵称是更好的选择。将生成的昵称转为Unicode即可一目了然,垂直昵称的原理是"\u000d.join(nickname),\u000d会表现为换行,昵称后缀则是"\u2067\u2067{suffix}\u2067\u2000",更详细可自行查阅几个Unicode码含义。</p>
+                <p>By Pafonshaw</p>
+            </div>
+            <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 10px;">
+                <button id="btnJoinQQ" style="background-color: #12b7f5; color: white;">加群交流</button>
+                <button id="btnJoinAuthor" style="background-color: #6200ee; color: white;">联系作者</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 页面元素
+        const inputNickname = document.getElementById('inputNickname');
+        const inputSuffix = document.getElementById('inputSuffix');
+        const switchVertical = document.getElementById('switchVertical');
+        const btnAbout = document.getElementById('btnAbout');
+        const btnGenerate = document.getElementById('btnGenerate');
+        const modalAbout = document.getElementById('modalAbout');
+        const closeBtn = document.querySelector('.close-btn');
+        const toast = document.getElementById('toast');
+        const btnJoinQQ = document.getElementById('btnJoinQQ');
+        const btnJoinAuthor = document.getElementById('btnJoinAuthor');
+        
+        // 显示Toast通知
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 复制文本到剪贴板
+        function copyText(text, msg = "") {
+            if (!text) {
+                showToast("内容为空");
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`复制成功${msg}`);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showToast("复制失败");
+            });
+        }
+        
+        // 处理昵称生成
+        function generateNickname() {
+            const nickname = inputNickname.value;
+            const suffix = inputSuffix.value;
+            const vertical = switchVertical.checked;
+            
+            // 验证输入
+            if (!nickname && !suffix) {
+                showToast("请输入昵称或后缀");
+                return;
+            }
+            
+            // 检查冲突
+            if (nickname && suffix && vertical) {
+                alert("警告：群昵称只支持垂直，QQ昵称只支持后缀，两者不可兼得。");
+            }
+            
+            // 处理垂直昵称
+            let processedNickname = vertical && nickname 
+                ? nickname.split('').join('\u000d') 
+                : nickname;
+            
+            // 处理后缀
+            const processedSuffix = suffix 
+                ? `\u2067\u2067${suffix}\u2067\u2000` 
+                : "";
+            
+            const result = `${processedNickname}${processedSuffix}`;
+            
+            // 长度检查
+            if (result.length > 60) {
+                if (confirm(`警告：QQ昵称长度不能超过36个字符，群昵称长度不能超过60个字符，当前：${result.length}个字符。是否继续复制？`)) {
+                    copyText(result, getUsageMessage(vertical, nickname, suffix));
+                }
+            } else {
+                copyText(result, getUsageMessage(vertical, nickname, suffix));
+            }
+        }
+        
+        // 获取使用场景消息
+        function getUsageMessage(vertical, nickname, suffix) {
+            if (vertical && nickname && suffix) {
+                return "，该昵称为无效昵称";
+            } else if (vertical && nickname) {
+                return "，该昵称可用于群昵称";
+            } else if (suffix) {
+                return "，该昵称可用于QQ昵称";
+            }
+            return "，该昵称无意义";
+        }
+        
+        // 事件监听
+        btnAbout.addEventListener('click', () => {
+            modalAbout.style.display = 'flex';
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            modalAbout.style.display = 'none';
+        });
+        
+        btnGenerate.addEventListener('click', generateNickname);
+        
+        btnJoinQQ.addEventListener('click', () => {
+            window.open('http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=d67vYQvcU3SIf7WgrIXZ1TRuENAQD0DR&authKey=H7LT7A4c0cUc%2Fk4AsVkEX%2FFJHgAT0nEeaEJbIBpkASUGFyenorzAvPnGJYtxWfrp&noverify=0&group_code=855439202');
+        });
+        
+        btnJoinAuthor.addEventListener('click', () => {
+            window.open('https://qm.qq.com/q/FPJZVF1XsA?from=tim');
+        });
+        
+        // 点击模态框外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target === modalAbout) {
+                modalAbout.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
